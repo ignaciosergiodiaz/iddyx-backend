@@ -30,22 +30,24 @@ function transformBodyToLowerCase(req, res, next) {
     req.body.email && (req.body.email = req.body.email.toLowerCase())
     next()
 }
-
 UserRouter.post('/user/signup', async (req, res) => {
-
   try {
     const newUser = req.body;
 
+    // Verificar si el usuario ya existe
     const userExists = await userController.userExists(newUser.username, newUser.email);
 
     if (userExists) {
-      return res.status(409).json("El correo ya esta asociado a una cuenta");
+      return res.status(409).json("El correo ya está asociado a una cuenta");
     }
 
+    // Hashear la contraseña del nuevo usuario
     const hash = await bcrypt.hash(newUser.password, 10);
 
+    // Generar un token de verificación para el nuevo usuario
     const token = jwt.sign({ _id: newUser._id }, config.jwt.secret);
 
+    // Configuración del transporte de nodemailer
     const transporter = nodemailer.createTransport({
       host: 'smtp.gmail.com',
       port: 587,
@@ -57,24 +59,35 @@ UserRouter.post('/user/signup', async (req, res) => {
       }
     });
 
+    // Opciones del correo de verificación
     const mailOptions = {
       from: 'ignaciosergiodiaz@gmail.com',
       to: newUser.email,
       subject: 'Verificación de cuenta',
-      html: `<p>Hola ${newUser.username},</p><p>Gracias por registrarte. Por favor, haz clic 
-      en el siguiente enlace para verificar tu cuenta:</p><p><a href="${config.appUrl}/verify/${token}">${config.appUrl}/verify/${token}</a></p><p>Si no has 
-      solicitado una cuenta en nuestro sitio, por favor ignora este mensaje.</p>`,
+      html: `
+        <p>Hola ${newUser.username},</p>
+        <p>Gracias por registrarte. Por favor, haz clic en el siguiente enlace para verificar tu cuenta:</p>
+        <p><a href="${config.appUrl}/verify/${token}">${config.appUrl}/verify/${token}</a></p>
+        <p>Si no has solicitado una cuenta en nuestro sitio, por favor ignora este mensaje.</p>
+      `,
     };
 
-    transporter.sendMail(mailOptions, (error, info) => {
+    // Envío del correo de verificación
+    transporter.sendMail(mailOptions, async (error, info) => {
       if (error) {
         console.log(error);
         return res.status(500).json('Error al enviar el correo de verificación');
       } else {
-        userController.createUser(newUser, hash).then((newUser) => {
-          console.log(`Usuario ${newUser.username} fue creado exitósamente`);
+        try {
+          // Crear el nuevo usuario en la base de datos
+          await userController.createUser(newUser, hash);
+          console.log(`Usuario ${newUser.username} fue creado exitosamente`);
+          // Devolver una respuesta de éxito con el token de verificación
           return res.status(201).json({ token: token });
-        });
+        } catch (err) {
+          console.log(err);
+          return res.status(500).json('Error al crear el usuario');
+        }
       }
     });
   } catch (err) {
@@ -82,6 +95,7 @@ UserRouter.post('/user/signup', async (req, res) => {
     return res.status(500).json('Error al crear el usuario');
   }
 });
+
 
 UserRouter.post('/user/signin', async (req, res) => {
 
