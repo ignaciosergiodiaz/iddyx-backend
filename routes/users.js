@@ -30,6 +30,7 @@ function transformBodyToLowerCase(req, res, next) {
     req.body.email && (req.body.email = req.body.email.toLowerCase())
     next()
 }
+
 UserRouter.post('/user/signup', async (req, res) => {
   try {
     const newUser = req.body;
@@ -55,7 +56,7 @@ UserRouter.post('/user/signup', async (req, res) => {
       requireTLS: true,
       auth: {
         user: 'ignaciosergiodiaz@gmail.com',
-        pass: 'dlfopehxhpuozfwu'
+        pass: 'qyvk jvvf djhv xosi'
       }
     });
 
@@ -76,7 +77,7 @@ UserRouter.post('/user/signup', async (req, res) => {
     transporter.sendMail(mailOptions, async (error, info) => {
       if (error) {
         console.log(error);
-        return res.status(500).json('Error al enviar el correo de verificación');
+          return res.status(500).json('Error al enviar el correo de verificación');
       } else {
         try {
           // Crear el nuevo usuario en la base de datos
