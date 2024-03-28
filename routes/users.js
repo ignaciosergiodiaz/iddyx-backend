@@ -190,7 +190,6 @@ UserRouter.post('/user/signin', async (req, res) => {
       }
 })
 
-
 // PUT: Update User
 UserRouter.put('/user/:userId', (req, res) => {
     const { userId } = req.params;
