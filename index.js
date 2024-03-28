@@ -3,8 +3,7 @@ const log = require('./utils/logger')
 const config = require('./config/index')
 
 var session = require('express-session')
-
-var port = 4000 
+var port = 3945
 
 //connect db
 const https = require('https');
